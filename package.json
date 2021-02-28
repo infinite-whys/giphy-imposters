@@ -1,0 +1,20 @@
+{
+  "name": "giphy-imposters",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "npx tsc-watch --onSuccess \"node build/index.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.31",
+    "tsc-watch": "^4.2.9",
+    "typescript": "^4.2.2"
+  }
+}
