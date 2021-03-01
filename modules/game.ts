@@ -296,7 +296,7 @@ export class Game extends Worker {
         const {highestVotes,votedFor,isTie} = this.countVotes()
         this.votes={}
         if(isTie){
-            await this.channel.send(`${votedFor.map(id=>`<@${id}>)}`).join(' ')} received the same number of votes, no one is dead this round`)
+            await this.channel.send(`${votedFor.map(id=>`<@${id}>`).join(' ')} received the same number of votes, no one is dead this round`)
         }else{
             await this.channel.send(`<@${votedFor[0]}> received the most number of votes, `)
             await this.pause(1)
