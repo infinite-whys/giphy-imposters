@@ -1,16 +1,11 @@
-import * as Discord from 'discord.js'
-const client = new Discord.Client();
+const { ShardingManager } = require('discord.js');
 
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+import * as config from './config.json'
+
+const manager = new ShardingManager(`${__dirname}/modules/lounge.js`, { 
+    token:config.token
 });
 
-const hasMentionedBot=(message)=>{
-    // mentions.some()
-}
+manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
 
-client.on('message', message => {
-//   if()
-});
-
-client.login('ODA5NDMyMjk1Nzc2ODQ1ODI0.YCVAkQ.NgYGRlVaLcVlbwqDLbM_CWUD1M0');
+manager.spawn();
