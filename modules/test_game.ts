@@ -9,7 +9,7 @@ const test=async()=>{
 
     const guild=await client.guilds.fetch('771351015894941706')
 
-    const gameChannelID='815641116014936115'
+    const gameChannelID='815992624733224960'
     const game=new Game(gameChannelID)
 
     game.client=client
