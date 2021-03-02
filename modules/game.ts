@@ -12,15 +12,6 @@ import { memory } from 'console'
 import { get } from 'https'
 import { stat } from 'fs'
 
-const makeid = (length: number) => {
-    var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var charactersLength = characters.length;
-    for (var i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-}
 
 const getRandomInt = (min, max) => {
     min = Math.ceil(min);
@@ -41,8 +32,9 @@ type Votes = {
 
 export class Game extends Worker {
     channelID: string
+    channel: TextChannel
+    selfDestroyTimer:NodeJS.Timeout
     players: Array<User> = []
-    channel?: TextChannel
     currentPlayer?: number
     startingPlayer?: number
     word?: string
@@ -51,9 +43,12 @@ export class Game extends Worker {
     votes: Votes = {}
     numImposters?:number
 
-    constructor(channelID: string) {
+    constructor(channelID: string,channel:TextChannel) {
         super()
         this.channelID = channelID
+        this.channel=channel
+        this.channel.send(':partying_face: :partying_face: :partying_face: **Welcome to GIF Imposters!**')
+        this.channel.send('https://giphy.com/gifs/homecoming-samplertimes-scarlett-spider-hsnEe5wHZCsubINYmT')
     }
 
     filter(message: Message) {
@@ -102,9 +97,6 @@ export class Game extends Worker {
     }
 
     async close() {
-        if (!this.channel) {
-            this.channel = await this.client.channels.fetch(this.channelID, true) as TextChannel
-        }
         this.channel.delete()
     }
 
@@ -158,12 +150,12 @@ export class Game extends Worker {
 
     async startGame(message: Message) {
         try {
-            if (!this.channel) {
-                this.channel = message.channel as TextChannel
-                setTimeout(() => {
-                    this.channel.delete()
-                }, 60 * 60 * 1000)
+            if (this.selfDestroyTimer) {
+               clearTimeout(this.selfDestroyTimer)
             }
+            this.selfDestroyTimer=setTimeout(() => {
+                this.close()
+            }, 60 * 60 * 1000)
             this.status = 'ongoing'
             this.word = 'cat'
             this.startingPlayer = getRandomInt(0, this.players.length)
@@ -401,7 +393,7 @@ export class Game extends Worker {
     }
 
     pause(seconds: number) {
-        const pause = new Promise((resolve, reject) => {
+        const pause = new Promise<void>((resolve, reject) => {
             setTimeout(() => { resolve() }, seconds * 1000)
         })
         return pause

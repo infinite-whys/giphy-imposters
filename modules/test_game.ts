@@ -10,7 +10,8 @@ const test=async()=>{
     const guild=await client.guilds.fetch('771351015894941706')
 
     const gameChannelID='815992624733224960'
-    const game=new Game(gameChannelID)
+    const channel= await client.channels.fetch(gameChannelID,true) as Discord.TextChannel
+    const game=new Game(gameChannelID,channel)
 
     game.client=client
     await game.init()
@@ -20,7 +21,7 @@ const test=async()=>{
 
     game.players.push(player)
     
-    const channel= await client.channels.fetch(gameChannelID,true) as Discord.TextChannel
+   
     const testMessage=new Discord.Message(
         client,
         {
