@@ -1,6 +1,6 @@
 import {Message, TextChannel,MessageEmbed} from 'discord.js'
 
-import {Worker} from '../worker'
+import {Worker} from './worker'
 import {Game} from './game'
 
 const channels:{[key:string]:Game} ={}  // key = the IDs of the channels that have a game running already
@@ -9,6 +9,7 @@ export class CreateGame extends Worker{
     filter(message:Message){
         const met=message.mentions.has(this.client.user)
         && message.content.toLowerCase().endsWith('create')
+        && message.channel.type=='text'
         return met
     }
 
@@ -59,6 +60,10 @@ export class CloseGame extends Worker{
 }
 
 export class GameHelp extends Worker{
+    constructor(){
+        super()
+        
+    }
     filter(message:Message){
         const met=(message.mentions.has(this.client.user)||message.channel.type=='dm')
         && message.content.toLowerCase().endsWith('help')
@@ -69,21 +74,21 @@ export class GameHelp extends Worker{
         try{
             const helpMessage = new MessageEmbed({
                 color: '#0099ff',
-                title:  'Welcome to GIF Imposters!',
+                title:  'Welcome to Gif Imposters!',
                 description: [
                     '**Game Rules**',
-                    ['GIF Imposters is a game for three or more players.',
+                    ['Gif Imposters is a game for three or more players.',
                      'In each game, one or more imposters will be hidden among the players.',
                      'They are trying to steal the secret *word*  from other team mates'
                     ].join(' '),   
                     null,
                     '- All the players will be given a word at the beginning of the game, *except* the imposters.',
-                    '- During the game, you can only use GIFs to describe the word. The the chosen GIF cannot contain the exact word in question.',
+                    '- During the game, you can only use Gifs to describe the word. The the chosen Gif cannot contain the exact word in question.',
                     '- The imposters win by successfully guessing the word (or by misleading other players so they cannot win).',
                     '- And other players (the team mates) win by finding out who the imposters are.'
                 ].join('\n'),
                 fields: [
-                    { name: 'Create a new game', value: `Type "<@${this.client.user.id}> create" in any channel`},
+                    { name: 'Create a new game', value: `Type "<@${this.client.user.id}> create" in any text channel`},
                     { name: 'Join an existing game', value:`The player who wants to join types "<@${this.client.user.id}> join" in the channel, where a game has been created`},
                     { name: 'Start the game', value: `Type "<@${this.client.user.id}> start" in the channel where sufficient players have gathered`},
                     { name: 'Restart the game with the same players', value: `Type "<@${this.client.user.id}> start" again`},

@@ -2,7 +2,7 @@ import { readFileSync } from 'fs'
 import { Message, User, TextChannel, MessageEmbed } from 'discord.js'
 
 
-import { Worker } from '../worker'
+import { Worker } from './worker'
 
 
 const getRandomInt = (min, max) => {
@@ -47,7 +47,7 @@ export class Game extends Worker {
         super()
         this.channelID = channelID
         this.channel = channel
-        this.channel.send(':partying_face: :partying_face: :partying_face: **Welcome to GIF Imposters!**')
+        this.channel.send(':partying_face: :partying_face: :partying_face: **Welcome to Gif Imposters!**')
         this.channel.send('https://giphy.com/gifs/homecoming-samplertimes-scarlett-spider-hsnEe5wHZCsubINYmT')
     }
 
@@ -76,7 +76,7 @@ export class Game extends Worker {
             } else if (mentionedBot && this.status == 'waiting' && lowerCaseContent.endsWith('leave')){
                 this.leave(message)
             } else if (this.status == 'ongoing' && currentPlayer && currentPlayer.id == message.author.id) {
-                this.parseGIF(message)
+                this.parseGif(message)
             } else if (this.status == 'ongoing') {
                 message.delete()
                 const warning = await message.channel.send('Everyone else :shushing_face:')
@@ -210,7 +210,7 @@ export class Game extends Worker {
                 title: 'Game Rules',
                 description: [
                     '- All the players will be given a word, *except* the imposters.',
-                    '- During the game, you can only use GIFs to describe the word. The the chosen gif cannot contain the exact word as a keyword.',
+                    '- During the game, you can only use Gifs to describe the word. The the chosen gif cannot contain the exact word as a keyword.',
                     '- The imposters win by successfully guessing the word',
                     '- And the other players win by finding out who the imposters are.',
                     `- You can messgae <@${this.client.user.id}> privately with the word "help" if you need more information`
@@ -231,7 +231,7 @@ export class Game extends Worker {
 
             const welcomeMessage = {
                 teammate: `You are a cheerful team mate. The magic word is **${this.word}**.` +
-                    'Remember, you should never mention this word directly in the conversations, or use a GIF containing this keyword.',
+                    'Remember, you should never mention this word directly in the conversations, or use a Gif containing this keyword.',
                 imposter: {
                     singular: 'You are the only imposter in this game. Try to guess the word from the clues other players give.',
                     plural: 'You are an imposter. Try to guess the word from the clues other players give.' +
@@ -262,7 +262,7 @@ export class Game extends Worker {
     async startTurn() {
         try {
             const player = this.players[this.currentPlayer]
-            await this.channel.send(`Now it\'s <@${player.id}>'s turn. ${player.username}, use a GIF to describe the word.` +
+            await this.channel.send(`Now it\'s <@${player.id}>'s turn. ${player.username}, use a Gif to describe the word.` +
                 ' (If you are the imposter, just pretend you know)')
         } catch (e) {
             console.error(e)
@@ -335,7 +335,7 @@ export class Game extends Worker {
         await this.startVoting()
     }
 
-    async parseGIF(message: Message) {
+    async parseGif(message: Message) {
         try {
             if (message.content.includes(this.word)) {
                 message.delete()
@@ -343,7 +343,7 @@ export class Game extends Worker {
                 return
             }
             if (message.content.endsWith('.gif')) {
-                this.channel.send(`:bomb: Please use the GIF button or \`/giphy <keyword>\` to look up for GIFs`)
+                this.channel.send(`:bomb: Please use the Gif button or \`/giphy <keyword>\` to look up for Gifs`)
                 return
             }
 
