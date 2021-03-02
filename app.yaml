@@ -6,3 +6,5 @@ service: gif-imposters
 
 manual_scaling:
   instances: 1
+
+entrypoint: node index.js

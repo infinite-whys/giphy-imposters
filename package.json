@@ -5,7 +5,9 @@
   "main": "build/index.js",
   "scripts": {
     "start": "npx tsc-watch --onSuccess \"node build/index.js\"",
-    "test": "npx tsc-watch --onSuccess \"node build/modules/test_game.js\""
+    "test": "npx tsc-watch --onSuccess \"node build/modules/test_game.js\"",
+    "build":"tsc;cp -r assets build/;",
+    "deploy":"npm run build;cp package.json build;cp app.yaml build;cd build;gcloud app deploy"
   },
   "author": "",
   "license": "ISC",
