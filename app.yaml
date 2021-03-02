@@ -1,0 +1,8 @@
+runtime: nodejs14
+
+instance_class: B1
+
+service: gif-imposters
+
+manual_scaling:
+  instances: 1

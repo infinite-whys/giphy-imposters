@@ -1,6 +1,3 @@
 {
-    "token":"ODA5NDMyMjk1Nzc2ODQ1ODI0.YCVAkQ.NgYGRlVaLcVlbwqDLbM_CWUD1M0",
-    "gamePrefix":"gif-imposters",
-    "loungeChannelID":"815534771676381194",
-    "categoryID":"815629725958799370"
+    "secretID":"projects/137214773545/secrets/gif-imposters-discord/versions/latest"
 }

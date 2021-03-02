@@ -1,11 +1,14 @@
 const { ShardingManager } = require('discord.js');
 
-import * as config from './config.json'
+import {createAndAccessSecret} from './modules/secret'
 
-const manager = new ShardingManager(`${__dirname}/modules/lounge.js`, { 
-    token:config.token
-});
 
-manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
-
-manager.spawn();
+createAndAccessSecret().then(
+    (token:string)=>{
+        const manager = new ShardingManager(`${__dirname}/modules/lounge.js`, {token});
+        
+        manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
+        
+        manager.spawn();
+    }
+).catch(console.error)
