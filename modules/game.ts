@@ -128,6 +128,7 @@ export class Game extends Worker {
 
     leave(message: Message) {
         this.players = this.players.filter(player => player.id != message.author.id)
+        delete this.playerStates[message.author.id]
         message.channel.send(`:sob: <@${message.author.id}> left the game. We have ${this.players.length} players (${this.getPlayersAsString()}) in the game.`)
     }
 
