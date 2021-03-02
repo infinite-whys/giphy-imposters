@@ -9,4 +9,4 @@
       "resolveJsonModule":true
     },
     "lib": ["es2015"]
-  }
+}

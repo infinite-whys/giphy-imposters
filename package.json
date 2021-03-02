@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@giphy/js-fetch-api": "^2.2.2",
     "discord.js": "^12.5.1"
   },
   "devDependencies": {

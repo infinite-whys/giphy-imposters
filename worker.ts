@@ -1,5 +1,4 @@
 import * as Discord from 'discord.js'
-import * as config from './config.json'
 
 export class Worker{
   client:Discord.Client= new Discord.Client()
