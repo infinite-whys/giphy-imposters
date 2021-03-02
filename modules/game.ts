@@ -19,12 +19,12 @@ const getRandomInt = (min, max) => {
     return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 }
 
-type Identity = 'teammate' | 'imposter' 
-type PlayerStatus='alive'|'ghost'
-type PlayerState = { 
-    playerID: number | string, 
-    identity: Identity, 
-    status:PlayerStatus
+type Identity = 'teammate' | 'imposter'
+type PlayerStatus = 'alive' | 'ghost' | 'out'
+type PlayerState = {
+    playerID: number | string,
+    identity: Identity,
+    status: PlayerStatus
 }
 type Votes = {
     [key: string]: string
@@ -33,20 +33,21 @@ type Votes = {
 export class Game extends Worker {
     channelID: string
     channel: TextChannel
-    selfDestroyTimer:NodeJS.Timeout
+    selfDestroyTimer: NodeJS.Timeout
     players: Array<User> = []
     currentPlayer?: number
     startingPlayer?: number
     word?: string
     status: 'waiting' | 'ongoing' | 'voting' = 'waiting'
-    playerStates: Array<PlayerState>=[]
+    playerStates: Array<PlayerState> = []
     votes: Votes = {}
-    numImposters?:number
+    round: number = 1
+    numImposters?: number
 
-    constructor(channelID: string,channel:TextChannel) {
+    constructor(channelID: string, channel: TextChannel) {
         super()
         this.channelID = channelID
-        this.channel=channel
+        this.channel = channel
         this.channel.send(':partying_face: :partying_face: :partying_face: **Welcome to GIF Imposters!**')
         this.channel.send('https://giphy.com/gifs/homecoming-samplertimes-scarlett-spider-hsnEe5wHZCsubINYmT')
     }
@@ -93,7 +94,8 @@ export class Game extends Worker {
         this.status = 'waiting'
         this.currentPlayer = null
         this.word = null
-        this.playerStates=[]
+        this.playerStates = []
+        this.round = 1
     }
 
     async close() {
@@ -101,17 +103,17 @@ export class Game extends Worker {
     }
 
     getNumImposters() {
-        if(!this.numImposters){
-            this.numImposters=Math.ceil(this.players.length / 4)
-        }else{
-            this.numImposters=this.playerStates.reduce(
-                (num,state)=>{
-                    if(state.identity=='imposter' && state.status=='alive'){
+        if (!this.numImposters) {
+            this.numImposters = Math.ceil(this.players.length / 4)
+        } else {
+            this.numImposters = this.playerStates.reduce(
+                (num, state) => {
+                    if (state.identity == 'imposter' && state.status == 'alive') {
                         num++
                     }
                     return num
                 }
-            ,0)
+                , 0)
         }
         return this.numImposters
     }
@@ -131,7 +133,7 @@ export class Game extends Worker {
             let item = {
                 playerID: player.id,
                 identity: 'teammate',
-                status:'alive'
+                status: 'alive'
             } as PlayerState
             if (imposterIndexes.includes(i)) {
                 item.identity = 'imposter'
@@ -144,20 +146,32 @@ export class Game extends Worker {
         return this.playerStates.find(x => x.playerID == playerID)
     }
 
-    setPlayerStatus(playerID:string | number,status:PlayerStatus){
-        this.playerStates.find(x => x.playerID == playerID).status=status
+    setPlayerStatus(playerID: string | number, status: PlayerStatus) {
+        this.playerStates.find(x => x.playerID == playerID).status = status
     }
 
     async startGame(message: Message) {
         try {
             if (this.selfDestroyTimer) {
-               clearTimeout(this.selfDestroyTimer)
+                clearTimeout(this.selfDestroyTimer)
             }
-            this.selfDestroyTimer=setTimeout(() => {
+            this.selfDestroyTimer = setTimeout(() => {
                 this.close()
             }, 60 * 60 * 1000)
+
+            if (this.players.length == 0) {
+                this.channel.send([
+                    [`You need at least 3 players to start a game. `,
+                    this.players.length>0?`${this.getPlayersAsString()} are in the Game so far`:null].join(' '),
+                    `- Use "<@${this.client.user.id}> join" to join a game`,
+                    `- Or, "<@${this.client.user.id}> leave" to leave the game`
+                ].join('\n')    
+                )
+                return
+            }
+
             this.status = 'ongoing'
-            this.word = 'cat'
+            this.word = 'cat'   //TODO
             this.startingPlayer = getRandomInt(0, this.players.length)
             this.currentPlayer = this.startingPlayer
             this.assignIdentity()
@@ -166,25 +180,30 @@ export class Game extends Worker {
             this.channel.send('https://giphy.com/gifs/excited-family-guy-stewie-griffin-7eAvzJ0SBBzHy')
             await this.pause(1)
             // 
-            this.channel.send(`There are ${this.players.length} players (${this.getPlayers()}) in the game, ` + 'and one of them is the *imposter*.')
+
+            const gameStartMessage = new MessageEmbed({
+                color: '#0099ff',
+                title: 'Game Rules',
+                description: [
+                    '- All the players will be given a word, *except* the imposters.',
+                    '- During the game, you can only use GIFs to describe the word. The the chosen gif cannot contain the exact word as a keyword.',
+                    '- The imposters win by successfully guessing the word',
+                    '- And the other players win by finding out who the imposters are.',
+                    `- You can messgae <@${this.client.user.id}> privately with the word "help" if you need more information`
+                ].join('\n'),
+                fields: [
+                    { name: 'Number of Players', value: this.players.length, inline: true },
+                    { name: 'Number of Imposters', value: this.numImposters, inline: true },
+                    { name: 'Players in the Game', value: this.getPlayersAsString() }
+                ]
+            });
+
+            this.channel.send(gameStartMessage)
             await this.pause(1)
-            const gameStartMessages = [
-                '**The Rules of the Game**',
-                '```',
-                '- All the players will be given a word, except the imposters.',
-                '- During the game, you can only use GIFs to describe the word. The the chosen gif cannot contain the exact word as a keyword.',
-                '- The imposters win by successfully guessing the word',
-                '- And the other players win by finding out who the imposters are.',
-                '```'
-            ]
-            this.channel.send(gameStartMessages.join('\n'))
             const gameStartCountdown = 5
             this.countdown(gameStartCountdown, 'The game will start in')
             await this.pause(gameStartCountdown)
             this.channel.send(`Now the game begins, I've send each of you a DM :love_letter: containing the word, except for the imposter :alien:. Check your private message!`)
-
-            const teammateWelcome = `You are a cheerful teammate. The magic word is **${this.word}**.` +
-                'Remember, you should never mention this word directly in the conversations, or use a GIF containing this keyword.'
 
             const welcomeMessage = {
                 teammate: `You are a cheerful team mate. The magic word is **${this.word}**.` +
@@ -192,7 +211,7 @@ export class Game extends Worker {
                 imposter: {
                     singular: 'You are the only imposter in this game. Try to guess the word from the clues other players give.',
                     plural: 'You are an imposter. Try to guess the word from the clues other players give.' +
-                        `There are ${this.numImposters} imposters in the game, they are: ${this.getImposters()}`
+                        `There are ${this.numImposters} imposters in the game, they are: ${this.getPlayersAsString('imposter')}`
                 }
             }
 
@@ -217,7 +236,22 @@ export class Game extends Worker {
 
     async startTurn() {
         const player = this.players[this.currentPlayer]
-        this.channel.send(`Now it\'s <@${player.id}>'s turn. ${player.username}, use a GIF to describe the word.` +
+        if (this.currentPlayer == this.startingPlayer) {
+            const newRoundMessage = new MessageEmbed({
+                color: '#0099ff',
+                title: `Round ${this.round}`,
+                description: `You can always messgae <@${this.client.user.id}> privately with the word "help" if you are not sure about something`,
+                fields: [
+                    { name: 'Players alive', value: this.players.length, inline: true },
+                    { name: 'Imposters alive', value: this.numImposters, inline: true },
+                    { name: 'Live players in the game', value: this.getPlayersAsString(null, 'alive') }, // TODO
+                    { name: 'Ghosts in the game', value: this.getPlayersAsString('teammate', 'ghost') },// TODO
+                    { name: 'Exposed imposters', value: this.getPlayersAsString('imposter', 'out') }// TODO
+                ]
+            })
+            await this.channel.send(newRoundMessage)
+        }
+        await this.channel.send(`Now it\'s <@${player.id}>'s turn. ${player.username}, use a GIF to describe the word.` +
             ' (If you are the imposter, just pretend you know)')
     }
 
@@ -257,10 +291,10 @@ export class Game extends Worker {
         this.currentPlayer = next
         if (this.currentPlayer == this.startingPlayer) {
             await this.endOfRound()
-        }else{
+        } else {
             this.startTurn()
         }
-       
+
     }
 
     async endOfRound() {
@@ -285,41 +319,51 @@ export class Game extends Worker {
 
         await this.channel.send(`Voting ended. Final votes:`)
         await this.displayVotes()
-        const {highestVotes,votedFor,isTie} = this.countVotes()
-        this.votes={}
-        if(isTie){
-            await this.channel.send(`${votedFor.map(id=>`<@${id}>`).join(' ')} received the same number of votes, no one is dead this round`)
-        }else{
+        const { highestVotes, votedFor, isTie } = this.countVotes()
+        this.votes = {}
+        if (isTie) {
+            await this.channel.send(`${votedFor.map(id => `<@${id}>`).join(' ')} received the same number of votes, no one is dead this round`)
+        } else {
             await this.channel.send(`<@${votedFor[0]}> received the most number of votes, `)
             await this.pause(1)
-            await this.channel.send(this.getPlayerStates(votedFor[0]).identity=='imposter'?`<@${votedFor[0]}> is an imposter`:`<@${votedFor[0]}> is not an imposter`)
-            this.setPlayerStatus(votedFor[0],'ghost')
+
+            if (this.getPlayerStates(votedFor[0]).identity == 'imposter') {
+                // Player who got the most votes is an imposter
+                await this.channel.send(`<@${votedFor[0]}> is an imposter`)
+                this.setPlayerStatus(votedFor[0], 'out')
+                await this.channel.send(`<@${votedFor[0]}> is out of the game now. Better luck next time!`)
+            } else {
+                // Player who got the most votes is NOT an imposter
+                await this.channel.send(`<@${votedFor[0]}> is not an imposter`)
+                this.setPlayerStatus(votedFor[0], 'ghost')
+                await this.channel.send(`<@${votedFor[0]}> is a ghost now. Ghost cannot talk, but they can still vote - each of their votes counts as a half vote.`)
+            }
+
         }
 
-        if(this.getNumImposters()<=0){
-            await this.channel.send(`All imposters have been voted out, well done, ${this.getTeammates()}!`)
-        }else if(this.hasImpostersWin()){
-            await this.channel.send(`Imposters have won the game. Congrats ${this.getImposters()}`)
-        }else{
-            await this.channel.send(`<@${votedFor[0]}> is a ghost now. Ghost cannot talk, but they can still vote - each of their votes counts as a half vote.`)
+        if (this.getNumImposters() <= 0) {
+            await this.channel.send(`All imposters have been voted out, well done, ${this.getPlayersAsString('teammate')}!`)
+        } else if (this.hasImpostersWin()) {
+            await this.channel.send(`Imposters have won the game. Congrats ${this.getPlayersAsString('imposter')}`)
+        } else {
             this.startTurn()
         }
-        
+
     }
 
     async parseVote(message: Message) {
         const mentions = message.mentions
-        if (!mentions.everyone && mentions.users.last) {
+        if (!mentions.everyone && mentions.users.last()) {
             const voterID = message.author.id.toString()
-            const votedID=mentions.users.last().id.toString()
-            if(this.players.some(player=>player.id==votedID)){
-                this.votes[voterID] =votedID
+            const votedID = mentions.users.last().id.toString()
+            if (this.players.some(player => player.id == votedID)) {
+                this.votes[voterID] = votedID
                 await this.channel.send(`<@${voterID}> has voted. Votes received:`)
                 await this.displayVotes()
-            }else{
+            } else {
                 await this.channel.send(`<@${votedID}> is not part of the game`)
             }
-            
+
         }
     }
 
@@ -351,7 +395,7 @@ export class Game extends Worker {
                     voteCount[votedID] = 0
                 }
                 voterIDs.forEach(voterID => {
-                    voteCount[votedID] += this.getPlayerStates(voterID).status=='ghost'? 0.5 : 1
+                    voteCount[votedID] += this.getPlayerStates(voterID).status == 'ghost' ? 0.5 : 1
                 })
                 return voteCount
             }, {}
@@ -364,7 +408,7 @@ export class Game extends Worker {
             (highestVotes, [votedID, votes]) => {
                 if (votes > highestVotes) {
                     isTie = false
-                    votedFor=[votedID]
+                    votedFor = [votedID]
                     return votes
                 } else if (votes = highestVotes) {
                     isTie = true
@@ -375,19 +419,19 @@ export class Game extends Worker {
                 }
             }, 0)
 
-        return {highestVotes,votedFor,isTie}
+        return { highestVotes, votedFor, isTie }
     }
 
-    hasImpostersWin(){
-        const scores=this.playerStates.reduce(
-            (scores,state)=>{
-                scores[state.identity]+=state.status=='ghost'? 0.5 : 1
+    hasImpostersWin() {
+        const scores = this.playerStates.reduce(
+            (scores, state) => {
+                scores[state.identity] += state.status == 'ghost' ? 0.5 : 1
                 return scores
-            },{imposter:0,teammate:0}
+            }, { imposter: 0, teammate: 0 }
         )
-        if(scores.imposter>scores.teammate){
+        if (scores.imposter > scores.teammate) {
             return true
-        }else{
+        } else {
             return false
         }
     }
@@ -424,24 +468,26 @@ export class Game extends Worker {
         const player = message.author
         if (!this.players.includes(player)) {
             this.players.push(player)
-            await message.channel.send(`:heart_eyes: <@${player.id}> Joined the game. We have ${this.players.length} players (${this.getPlayers()}) in the game.`)
+            this.playerStates.push({
+                playerID:player.id
+            }as PlayerState)
+            await message.channel.send(`:heart_eyes: <@${player.id}> Joined the game. We have ${this.players.length} players (${this.getPlayersAsString()}) in the game.`)
         }
     }
 
-    getPlayers() {
-        return this.players.map(player => `<@${player.id}>`).join(' ')
+    getPlayers(identity?: Identity, status?: PlayerStatus) {
+        const IDs = this.playerStates.filter(x => {
+            return (identity ? x.identity == identity : true) && (status ? x.status == status : true)
+        }).map(x => x.playerID)
+
+        const players = this.players.filter(x => IDs.includes(x.id))
+
+        return players
     }
 
-    getImposters() {
-        const imposterIDs = this.playerStates.filter(x=>x.identity=='imposter').map(x => x.playerID)
-        return this.players.filter(x => imposterIDs.includes(x.id)).map(player => `<@${player.id}>`).join(' ')
+    getPlayersAsString(identity?: Identity, status?: PlayerStatus) {
+        return this.getPlayers(identity, status).map(player => `<@${player.id}>`).join(' ')
     }
-
-    getTeammates() {
-        const teammateIDs = this.playerStates.filter(x=>x.identity=='teammate').map(x => x.playerID)
-        return this.players.filter(x => teammateIDs.includes(x.id)).map(player => `<@${player.id}>`).join(' ')
-    }
-
 
 }
 
