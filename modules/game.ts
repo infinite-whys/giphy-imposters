@@ -43,8 +43,8 @@ export class Game extends Worker {
     numImposters?: number
     guessingPlayerID?: string
 
-    constructor(channelID: string, channel: TextChannel) {
-        super()
+    constructor(name:string,channelID: string, channel: TextChannel) {
+        super(name)
         this.channelID = channelID
         this.channel = channel
         this.channel.send(':partying_face: :partying_face: :partying_face: **Welcome to Gif Imposters!**')
@@ -502,7 +502,7 @@ export class Game extends Worker {
                             isTie = false
                             votedFor = [votedID]
                             return votes
-                        } else if (votes = highestVotes) {
+                        } else if (votes == highestVotes) {
                             isTie = true
                             votedFor.push(votedID)
                             return highestVotes

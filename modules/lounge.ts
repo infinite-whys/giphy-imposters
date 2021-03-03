@@ -6,6 +6,9 @@ import { Game } from './game'
 const channels: { [key: string]: Game } = {}  // key = the IDs of the channels that have a game running already
 
 export class CreateGame extends Worker {
+    constructor(name:string){
+        super(name)
+    }
     filter(message: Message) {
         const met = message.mentions.has(this.client.user)
             && message.content.toLowerCase().endsWith('create')
@@ -25,8 +28,9 @@ export class CreateGame extends Worker {
                 )
                 return
             } else {
-                const game = new Game(message.channel.id, message.channel as TextChannel)
-                channels[message.channel.id.toString()] = game
+                const channelID=message.channel.id.toString()
+                const game = new Game(channelID,message.channel.id, message.channel as TextChannel)
+                channels[channelID] = game
                 game.init()
             }
         } catch (e) {
@@ -36,6 +40,9 @@ export class CreateGame extends Worker {
 }
 
 export class CloseGame extends Worker {
+    constructor(name:string){
+        super(name)
+    }
     filter(message: Message) {
         const met = message.mentions.has(this.client.user)
             && message.content.toLowerCase().endsWith('close')
@@ -60,9 +67,8 @@ export class CloseGame extends Worker {
 }
 
 export class GameHelp extends Worker {
-    constructor() {
-        super()
-
+    constructor(name:string){
+        super(name)
     }
     filter(message: Message) {
         const met = (message.mentions.has(this.client.user) || message.channel.type == 'dm')
@@ -103,9 +109,9 @@ export class GameHelp extends Worker {
     }
 }
 
-new CreateGame().init()
-new CloseGame().init()
-new GameHelp().init()
+new CreateGame('CreateGame').init()
+new CloseGame('CloseGame').init()
+new GameHelp('GameHelp').init()
 
 
 

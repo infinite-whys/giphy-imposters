@@ -2,8 +2,10 @@ import { Client, Message } from 'discord.js'
 
 export class Worker {
   client: Client = new Client()
+  name:string
 
-  constructor() {
+  constructor(name:string) {
+    this.name=name
 
   }
 
@@ -24,7 +26,7 @@ export class Worker {
   }
 
   onReady() {
-    console.log(`Logged in as ${this.client.user.tag}!`);
+    console.log(`Bot ${this.name} logged in as ${this.client.user.tag}!`);
   }
 
   onMessage(message: Message) {
