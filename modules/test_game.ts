@@ -11,7 +11,7 @@ const test=async()=>{
 
     const gameChannelID='815992624733224960'
     const channel= await client.channels.fetch(gameChannelID,true) as Discord.TextChannel
-    const game=new Game(gameChannelID,channel)
+    const game=new Game('lounge',gameChannelID,channel)
 
     game.client=client
     await game.init()

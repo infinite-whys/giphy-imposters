@@ -360,11 +360,11 @@ export class Game extends Worker {
 
     async parseGif(message: Message) {
         try {
-            if (message.content.includes(this.word)) {
-                message.delete()
-                this.channel.send(`:skull_crossbones: You cannot mention the word directly!`)
-                return
-            }
+            // if (message.content.includes(this.word)) {
+            //     message.delete()
+            //     this.channel.send(`:skull_crossbones: You cannot mention the word directly!`)
+            //     return
+            // }
             if (message.content.endsWith('.gif')) {
                 this.channel.send(`:bomb: Please use the Gif button or \`/giphy <keyword>\` to look up for Gifs`)
                 return
