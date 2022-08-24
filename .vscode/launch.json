@@ -19,7 +19,7 @@
             "type": "node",
             "env": {
                 "LOG_LEVEL":"DEBUG",
-                "GOOGLE_APPLICATION_CREDENTIALS":"/Users/YOYU/Code/giphy-imposters/.credentials/infinite-discord-bots-2d9487df0a96.json"
+                "GOOGLE_APPLICATION_CREDENTIALS":".credentials/infinite-discord-bots-2d9487df0a96.json"
             }
         },
         {
@@ -37,7 +37,7 @@
             "type": "node",
             "env": {
                 "LOG_LEVEL":"DEBUG",
-                "GOOGLE_APPLICATION_CREDENTIALS":"/Users/YOYU/Code/giphy-imposters/.credentials/infinite-discord-bots-417c420a905f.json"
+                "GOOGLE_APPLICATION_CREDENTIALS":".credentials/infinite-discord-bots-417c420a905f.json"
             }
         },
     ]
